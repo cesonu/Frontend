@@ -5,7 +5,8 @@ import { Link } from "react-router-dom";
 import { StoreContext } from "../Context/StoreContext";
 
 const Navbar = ({ setShowLogin }) => {
-  const [menu, setMenu] = useState("Menu");
+  const [menu, setMenu] = useState("Home"); 
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { getTotalCartAmount } = useContext(StoreContext);
   console.log("Total Cart Amount:", getTotalCartAmount()); // Log total cart amount for debugging
 
@@ -47,6 +48,12 @@ const Navbar = ({ setShowLogin }) => {
         <Link to="/" onClick={() => setMenu("Home")} className={menu === "Home" ? "active" : ""}>
           Home
         </Link>
+        <Link to="/cart" onClick={() => setMenu("Cart")} className={menu === "Cart" ? "active" : ""}>
+          Cart
+        </Link>
+        <Link to="/profile" onClick={() => setMenu("Profile")} className={menu === "Profile" ? "active" : ""}>
+          Profile
+        </Link>
         <a href="#explore-menu" onClick={() => setMenu("Menu")} className={menu === "Menu" ? "active" : ""}>
           Menu
         </a>
@@ -67,7 +74,7 @@ const Navbar = ({ setShowLogin }) => {
           <Link to="/cart">
             <img src={assets.basket_icon} alt="basket" />
           </Link>
-          <div className={getTotalCartAmount() > 0 ? "dot" : ""}></div>
+          <div className={getTotalCartAmount() === 0?"":"dot"}></div>
         </div>
         <button onClick={handleSignInClick}>{isLoggedIn ? "Logout" : "Sign In"}</button>
       </div>

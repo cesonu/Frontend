@@ -3,14 +3,14 @@ import './FoodItem.css';
 import { assets } from '../../assets/assets';
 import { StoreContext } from '../Context/StoreContext';
 
-const FoodItem = ({ id, name, price, description, image }) => {
+const FoodItem = ({ _id, name, price, description, image }) => {
   const { cartItems, addToCart } = useContext(StoreContext);
 
   const [quantity, setQuantity] = useState(1); // Track quantity
   const [showAddToCart, setShowAddToCart] = useState(true); // Toggle between "Add to Cart" and "+" button
 
   const handleAddToCart = () => {
-    addToCart(id, quantity); // Add item with chosen quantity
+    addToCart(_id, quantity); // Add item with chosen quantity
     setShowAddToCart(false); // Switch to quantity controls
   };
 

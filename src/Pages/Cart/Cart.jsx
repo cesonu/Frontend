@@ -23,11 +23,11 @@ const Cart = () => {
         </div>
         <br />
         <hr />
-        {food_list.map((item) => {
-          if (cartItems[item._id]) {
+        {food_list.map((item,index) => {
+          if (cartItems[item._id] && cartItems[item._id]>0) {
             return (
-              <div key={item._id}>
-                <div className="cart-items-title cart-items-item">
+              <div key={index}>
+                <div className="cart-items-title cart-items-item"> 
                   <img src={item.image} alt={item.name} />
                   <p>{item.name}</p>
                   <p>${item.price}</p>
