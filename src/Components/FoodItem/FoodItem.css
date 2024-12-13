@@ -135,3 +135,15 @@
     font-weight: bold;
     color: #333;
 }
+.food-item-customizations,
+.food-item-nutrition {
+  margin-top: 10px;
+}
+
+.food-item-customizations ul,
+.food-item-nutrition p {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+ 

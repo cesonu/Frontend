@@ -9,9 +9,35 @@ const FoodItem = ({ _id, name, price, description, image }) => {
   const [quantity, setQuantity] = useState(1); // Track quantity
   const [showAddToCart, setShowAddToCart] = useState(true); // Toggle between "Add to Cart" and "+" button
 
-  const handleAddToCart = () => {
-    addToCart(_id, quantity); // Add item with chosen quantity
-    setShowAddToCart(false); // Switch to quantity controls
+  // Add to Cart Handler
+  const handleAddToCart = async () => {
+    try {
+      // Add item to cart locally
+      addToCart(_id, quantity);
+
+      // Send the cart item to the backend
+      const response = await fetch('https://backend-2-i0ej.onrender.com/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: localStorage.getItem('user_id'),
+          food_id: _id,
+          quantity,
+          price,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add item to cart on the server.');
+      }
+
+      // Successfully added to cart on the backend
+      alert('Item added to cart!');
+      setShowAddToCart(false); // Switch to quantity controls
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Failed to add item to cart. Please try again.');
+    }
   };
 
   return (
@@ -19,10 +45,7 @@ const FoodItem = ({ _id, name, price, description, image }) => {
       <div className="food-item-image-container">
         <img className="food-item-image" src={image} alt="" />
         {showAddToCart ? (
-          <button
-            className="add-to-cart-button"
-            onClick={handleAddToCart}
-          >
+          <button className="add-to-cart-button" onClick={handleAddToCart}>
             Add to Cart
           </button>
         ) : (
