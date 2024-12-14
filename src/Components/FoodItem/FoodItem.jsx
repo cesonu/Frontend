@@ -3,11 +3,12 @@ import './FoodItem.css';
 import { assets } from '../../assets/assets';
 import { StoreContext } from '../Context/StoreContext';
 
-const FoodItem = ({ _id, name, price, description, image }) => {
+const FoodItem = ({ _id, name, price, description, image, customizations, nutrition }) => {
   const { cartItems, addToCart } = useContext(StoreContext);
 
   const [quantity, setQuantity] = useState(1); // Track quantity
   const [showAddToCart, setShowAddToCart] = useState(true); // Toggle between "Add to Cart" and "+" button
+  const [selectedCustomizations, setSelectedCustomizations] = useState([]); // Track selected customizations
 
   // Add to Cart Handler
   const handleAddToCart = async () => {
@@ -24,6 +25,7 @@ const FoodItem = ({ _id, name, price, description, image }) => {
           food_id: _id,
           quantity,
           price,
+          customizations: selectedCustomizations,
         }),
       });
 
@@ -38,6 +40,15 @@ const FoodItem = ({ _id, name, price, description, image }) => {
       console.error('Error adding to cart:', error);
       alert('Failed to add item to cart. Please try again.');
     }
+  };
+
+  // Handle Customization Selection
+  const handleCustomizationChange = (customization) => {
+    setSelectedCustomizations((prev) =>
+      prev.includes(customization)
+        ? prev.filter((item) => item !== customization) // Remove if already selected
+        : [...prev, customization] // Add if not selected
+    );
   };
 
   return (
@@ -72,7 +83,34 @@ const FoodItem = ({ _id, name, price, description, image }) => {
           <img src={assets.rating_starts} alt="" />
         </div>
         <p className="food-item-description">{description}</p>
-        <p className="food-item-price">${price} </p>
+        <p className="food-item-price">${price}</p>
+
+        {/* Nutrition Information */}
+        {nutrition && (
+          <div className="nutrition-info">
+            <h4>Nutrition Information:</h4>
+            <p>Calories: {nutrition.calories}</p>
+            <p>Fat: {nutrition.fat}</p>
+            <p>Protein: {nutrition.protein}</p>
+          </div>
+        )}
+
+        {/* Customization Options */}
+        {customizations && customizations.length > 0 && (
+          <div className="customizations">
+            <h4>Customizations:</h4>
+            {customizations.map((option, index) => (
+              <label key={index} className="customization-option">
+                <input
+                  type="checkbox"
+                  value={option.name}
+                  onChange={() => handleCustomizationChange(option)}
+                />
+                {option.name} (+${option.price})
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,14 +1,33 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../Components/Context/StoreContext";
 import { useNavigate } from "react-router-dom";
 
 const Cart = () => {
-  const { cartItems, food_list, removeFromCart, getTotalCartAmount } = useContext(StoreContext);
-  console.log("Cart Items State:", cartItems);
-
+  const { cartItems, food_list, removeFromCart, getTotalCartAmount, addToCart } =
+    useContext(StoreContext);
+  const [promoCode, setPromoCode] = useState(""); // For promo code input
+  const [discount, setDiscount] = useState(0); // To apply promo code discounts
 
   const navigate = useNavigate();
+
+  // Function to apply promo code
+  const handlePromoCode = () => {
+    if (promoCode === "DISCOUNT10") {
+      setDiscount(10); // Apply 10% discount
+      alert("Promo code applied! 10% discount added.");
+    } else {
+      alert("Invalid promo code. Please try again.");
+      setDiscount(0);
+    }
+  };
+
+  const calculateTotalWithDiscount = () => {
+    const subtotal = getTotalCartAmount();
+    const discountedTotal = subtotal - (subtotal * discount) / 100;
+    const deliveryFee = subtotal === 0 ? 0 : 4.5;
+    return discountedTotal + deliveryFee;
+  };
 
   return (
     <div className="cart">
@@ -23,15 +42,24 @@ const Cart = () => {
         </div>
         <br />
         <hr />
-        {food_list.map((item,index) => {
-          if (cartItems[item._id] && cartItems[item._id]>0) {
+        {food_list.map((item, index) => {
+          if (cartItems[item._id] && cartItems[item._id] > 0) {
             return (
               <div key={index}>
-                <div className="cart-items-title cart-items-item"> 
+                <div className="cart-items-title cart-items-item">
                   <img src={item.image} alt={item.name} />
                   <p>{item.name}</p>
                   <p>${item.price}</p>
-                  <p>{cartItems[item._id]}</p>
+                  <div className="quantity-control">
+                    <button
+                      onClick={() => addToCart(item._id, -1)}
+                      disabled={cartItems[item._id] <= 1}
+                    >
+                      -
+                    </button>
+                    <p>{cartItems[item._id]}</p>
+                    <button onClick={() => addToCart(item._id, 1)}>+</button>
+                  </div>
                   <p>${item.price * cartItems[item._id]}</p>
                   <p
                     onClick={() => removeFromCart(item._id)}
@@ -57,6 +85,15 @@ const Cart = () => {
               <p>${getTotalCartAmount()}</p>
             </div>
             <hr />
+            {discount > 0 && (
+              <>
+                <div className="cart-total-details">
+                  <p>Discount ({discount}%)</p>
+                  <p>-${(getTotalCartAmount() * discount) / 100}</p>
+                </div>
+                <hr />
+              </>
+            )}
             <div className="cart-total-details">
               <p>Delivery fee</p>
               <p>${getTotalCartAmount() === 0 ? 0 : 4.5}</p>
@@ -64,7 +101,7 @@ const Cart = () => {
             <hr />
             <div className="cart-total-details">
               <b>Total</b>
-              <b>${getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 4.5}</b>
+              <b>${calculateTotalWithDiscount().toFixed(2)}</b>
             </div>
           </div>
           <button onClick={() => navigate("/order")}>PROCEED TO CHECKOUT</button>
@@ -73,8 +110,13 @@ const Cart = () => {
           <div>
             <p>If you have a promo code, enter it here.</p>
             <div className="cart-promocode-input">
-              <input type="text" placeholder="Promo code" />
-              <button>Submit</button>
+              <input
+                type="text"
+                placeholder="Promo code"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+              />
+              <button onClick={handlePromoCode}>Submit</button>
             </div>
           </div>
         </div>
