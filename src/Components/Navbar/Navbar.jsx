@@ -1,39 +1,15 @@
-import React, { useContext, useState, useEffect } from "react";
+import { useState } from "react";
 import "./Navbar.css";
 import { assets } from "../../assets/assets";
-import { Link } from "react-router-dom";
-import { StoreContext } from "../Context/StoreContext";
+import { Link, useNavigate } from "react-router-dom";
 
-const Navbar = ({ setShowLogin }) => {
+const Navbar = ({ setShowLogin, user, handleLogout }) => {
   const [menu, setMenu] = useState("Home"); 
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { getTotalCartAmount } = useContext(StoreContext);
-  console.log("Total Cart Amount:", getTotalCartAmount()); // Log total cart amount for debugging
-
-
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const checkLoginState = () => {
-      const user = localStorage.getItem("user_id");
-      setIsLoggedIn(!!user);
-    };
-
-    checkLoginState();
-    const interval = setInterval(checkLoginState, 2000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("name");
-    setIsLoggedIn(false);
-    alert("Logged out successfully.");
-  };
+  const navigate = useNavigate();
 
   const handleSignInClick = () => {
-    if (isLoggedIn) {
-      handleLogout();
+    if (user) {
+      navigate('/profile');
     } else {
       setShowLogin(true);
     }
@@ -45,38 +21,43 @@ const Navbar = ({ setShowLogin }) => {
         <img src={assets.logo} alt="logo" className="logo" />
       </Link>
       <ul className="navbar-menu">
-        <Link to="/" onClick={() => setMenu("Home")} className={menu === "Home" ? "active" : ""}>
+        <Link 
+          to="/" 
+          onClick={() => setMenu("Home")} 
+          className={menu === "Home" ? "active" : ""}
+        >
           Home
         </Link>
-        <Link to="/cart" onClick={() => setMenu("Cart")} className={menu === "Cart" ? "active" : ""}>
+        <Link 
+          to="/cart" 
+          onClick={() => setMenu("Cart")} 
+          className={menu === "Cart" ? "active" : ""}
+        >
           Cart
         </Link>
-        <Link to="/profile" onClick={() => setMenu("Profile")} className={menu === "Profile" ? "active" : ""}>
-          Profile
-        </Link>
-        <a href="#explore-menu" onClick={() => setMenu("Menu")} className={menu === "Menu" ? "active" : ""}>
-          Menu
-        </a>
-        <a
-          href="#app-download"
-          onClick={() => setMenu("Mobile App")}
-          className={menu === "Mobile App" ? "active" : ""}
+        <Link 
+          to="/order" 
+          onClick={() => setMenu("Order")} 
+          className={menu === "Order" ? "active" : ""}
         >
-          Mobile App
-        </a>
-        <a href="#footer" onClick={() => setMenu("Contact Us")} className={menu === "Contact Us" ? "active" : ""}>
-          Contact Us
-        </a>
+          Order
+        </Link>
       </ul>
       <div className="navbar-right">
-        <img src={assets.search_icon} alt="search" />
-        <div className="navbar-search-icon">
-          <Link to="/cart">
-            <img src={assets.basket_icon} alt="basket" />
-          </Link>
-          <div className={getTotalCartAmount() === 0?"":"dot"}></div>
-        </div>
-        <button onClick={handleSignInClick}>{isLoggedIn ? "Logout" : "Sign In"}</button>
+        {user ? (
+          <div className="user-section">
+            <button onClick={handleSignInClick} className="profile-btn">
+              Profile
+            </button>
+            <button onClick={handleLogout} className="logout-btn">
+              Logout
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleSignInClick} className="sign-in-btn">
+            Sign In
+          </button>
+        )}
       </div>
     </div>
   );

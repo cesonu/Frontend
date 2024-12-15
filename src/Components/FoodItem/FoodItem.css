@@ -204,3 +204,15 @@
     color: tomato; /* Highlight text on hover */
     transition: color 0.3s ease-in-out;
 }
+
+.category-filter {
+    display: flex;
+    margin-top: 20px;
+    gap: 0 10px;
+    flex-wrap: wrap;
+}
+
+.category-filter button{
+    width: 200px;
+    margin-bottom: 10px;
+}

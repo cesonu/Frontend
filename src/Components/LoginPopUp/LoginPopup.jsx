@@ -1,115 +1,175 @@
-import React, { useState } from 'react';
+import { useState, useContext } from 'react';
+import axios from 'axios';
 import './LoginPopup.css';
-import { assets } from '../../assets/assets';
+import { StoreContext } from '../Context/StoreContext';
 
-const LoginPopup = ({ setShowLogin }) => {
-  const [currentState, setCurrentState] = useState('Login');
-  const [buttonText, setButtonText] = useState('Login'); // For logout functionality
-  const [user, setUser] = useState(null); // Track logged-in user
+const LoginPopup = ({ setShowLogin, setUser }) => {
+  const [currState, setCurrState] = useState("Login");
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const { setCartItems } = useContext(StoreContext);
 
-    const formData = new FormData(e.target);
-    const email = formData.get('email');
-    const password = formData.get('password');
-    const name = formData.get('name') || ''; // Optional for login
-
+  const fetchCartItems = async (userId) => {
     try {
-      if (currentState === 'Sign Up') {
-        const response = await fetch('https://backend-2-i0ej.onrender.com/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          alert(data.message);
-        } else {
-          alert(data.message || 'Error during sign-up');
-        }
-      } else if (currentState === 'Login') {
-        const response = await fetch('https://backend-2-i0ej.onrender.com/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          // Store user data in localStorage
-          localStorage.setItem('user_id', data.user.user_id);
-          localStorage.setItem('name', data.user.name);
-
-          // Update button text and user state
-          setUser(data.user);
-          setButtonText('Logout');
-          alert(data.message);
-        } else {
-          alert(data.message || 'Error during login');
-        }
+      const backendUrl = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+      if (!backendUrl) {
+        throw new Error('Backend URL is not defined');
       }
+
+      const response = await axios.get(`${backendUrl}/cart/${userId}`);
+      
+      // Format cart items for context
+      const formattedCartItems = response.data.reduce((acc, item) => {
+        acc[item.food_id] = item.quantity;
+        return acc;
+      }, {});
+      
+      setCartItems(formattedCartItems);
     } catch (error) {
-      console.error('Error:', error.message);
-      alert('Something went wrong. Please try again.');
+      console.error('Error fetching cart items:', error);
+      throw error;
     }
   };
 
-  const handleLogout = () => {
-    // Clear localStorage and reset user state
-    localStorage.removeItem('user_id');
-    localStorage.removeItem('name');
-    setUser(null);
-    setButtonText('Login');
-    alert('Logged out successfully.');
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const backendUrl = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+      if (!backendUrl) {
+        throw new Error('Backend URL is not defined in environment variables');
+      }
+
+      let response;
+      if (currState === "Login") {
+        // Login endpoint
+        response = await axios.post(`${backendUrl}/login`, {
+          email: formData.email,
+          password: formData.password
+        });
+      } else {
+        // Signup endpoint
+        response = await axios.post(`${backendUrl}/signup`, {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        });
+      }
+      
+      // Validate response data
+      if (!response.data || !response.data.user || !response.data.user_id) {
+        throw new Error('Invalid authentication response');
+      }
+      
+      // Handle successful login/signup
+      const userData = response.data.user;
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Store user_id separately for cart functionality
+      localStorage.setItem('user_id', response.data.user_id);
+      
+      setUser(userData);
+      
+      // Fetch and update cart items
+      await fetchCartItems(response.data.user_id);
+      
+      setShowLogin(false);
+    } catch (error) {
+      // Detailed error logging
+      console.error('Full authentication error:', error);
+      
+      // More specific error handling
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('Server responded with error:', error.response.data);
+        console.error('Status code:', error.response.status);
+        
+        // Use server-provided error message if available
+        const errorMessage = error.response.data?.message || 
+                             error.response.data?.error || 
+                             'Authentication failed';
+        
+        alert(errorMessage);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+        alert('No response from server. Please check your network connection.');
+      } else {
+        // Something happened in setting up the request
+        console.error('Error setting up request:', error.message);
+        alert(error.message || 'An unexpected error occurred during authentication.');
+      }
+    }
   };
 
   return (
     <div className="login-popup">
-      <form
-        className="login-popup-container"
-        onSubmit={(e) => {
-          if (buttonText === 'Logout') {
-            handleLogout();
-            e.preventDefault(); // Prevent form submission when logging out
-          } else {
-            handleSubmit(e);
-          }
-        }}
-      >
+      <form onSubmit={handleSubmit} className="login-popup-container">
         <div className="login-popup-title">
-          <h2>{currentState}</h2>
-          <img onClick={() => setShowLogin(false)} src={assets.cross_icon} alt="" />
+          <h2>{currState}</h2>
+          <div onClick={() => setShowLogin(false)} className="close-icon">×</div>
         </div>
+        
         <div className="login-popup-inputs">
-          {currentState === 'Login' ? null : (
-            <input type="text" name="name" placeholder="Your Name" required />
+          {currState === "Signup" && (
+            <input 
+              type="text" 
+              name="name" 
+              placeholder="Name" 
+              value={formData.name}
+              onChange={handleChange}
+              required 
+            />
           )}
-          <input type="email" name="email" placeholder="Your email" required />
-          <input type="password" name="password" placeholder="Password" required />
+          
+          <input 
+            type="email" 
+            name="email" 
+            placeholder="Email" 
+            value={formData.email}
+            onChange={handleChange}
+            required 
+          />
+          
+          <input 
+            type="password" 
+            name="password" 
+            placeholder="Password" 
+            value={formData.password}
+            onChange={handleChange}
+            required 
+          />
         </div>
-        <button>{buttonText}</button>
-        {buttonText !== 'Logout' && (
-          <div className="login-popup-condition">
-            <input type="checkbox" required />
-            <p>By continuing, I agree to the terms of use & privacy policy.</p>
-          </div>
-        )}
-        {buttonText !== 'Logout' && (
+        
+        <button type="submit">
+          {currState === "Login" ? "Login" : "Create Account"}
+        </button>
+        
+        <div className="login-popup-condition">
+          <input type="checkbox" required />
+          <p>By continuing, I agree to the terms of use & privacy policy</p>
+        </div>
+        
+        {currState === "Login" ? (
           <p>
-            {currentState === 'Login' ? (
-              <>
-                Create a new account?{' '}
-                <span onClick={() => setCurrentState('Sign Up')}>Click here</span>
-              </>
-            ) : (
-              <>
-                Already have an account? <span onClick={() => setCurrentState('Login')}>Login here</span>
-              </>
-            )}
+            Create a new account? 
+            <span onClick={() => setCurrState("Signup")}>Click here</span>
+          </p>
+        ) : (
+          <p>
+            Already have an account? 
+            <span onClick={() => setCurrState("Login")}>Login here</span>
           </p>
         )}
       </form>

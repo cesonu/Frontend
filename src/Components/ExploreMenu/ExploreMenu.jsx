@@ -1,25 +1,57 @@
-import React from 'react'
+import { useState, useEffect } from 'react'
 import './ExploreMenu.css'
-import { menu_list } from '../../assets/assets'
+import axios from 'axios'
 
-const ExploreMenu = ({category,setcategory}) => {
+const ExploreMenu = () => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const backendUrl = import.meta.env.VITE_REACT_APP_BACKEND_URL;
+        if (!backendUrl) {
+          throw new Error('Backend URL is not defined');
+        }
+
+        const response = await axios.get(`${backendUrl}/categories`);
+        setCategories(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError('Failed to load categories');
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  if (loading) return <div>Loading categories...</div>;
+  if (error) return <div>{error}</div>;
+  
   return (
     <div className='explore-menu' id='explore-menu'>
-        <h1>Explore Our Menu</h1>
-        <p className='explore-menu-text'>Choose from a diverse menu featuring a delectable array... </p>
-        <div className="explore-menu-list">
-            {menu_list.map((item,index)=>{
-                return(
-                    <div onClick={()=>setcategory(prev=>prev===item.menu_name?"All":item.menu_name)} key={index} className='explore-menu-list-item'>
-                        <img className={category===item.menu_name?"active":""} src={item.menu_image} alt="" />
-                        <p>{item.menu_name}</p>
-
-                    </div>
-                )
-            })}
-
-        </div>
-        <hr/>
+      <h1>Explore Our Menu</h1>
+      <p className='explore-menu-text'>
+        Browse through our delicious categories
+      </p>
+      <div className='explore-menu-list'>
+        {categories.map((cat) => (
+          <div 
+            key={cat.category_id} 
+            className='explore-menu-list-item'
+          >
+            <img 
+              src={`${import.meta.env.VITE_REACT_APP_BACKEND_URL}/uploads/images/categories/${cat.image_url}`}
+              alt={`${cat.name} image`} 
+            />
+            <p>{cat.name.charAt(0).toUpperCase() + cat.name.slice(1)}</p>
+          </div>
+        ))}
+      </div>
+      <hr />
     </div>
   )
 }
