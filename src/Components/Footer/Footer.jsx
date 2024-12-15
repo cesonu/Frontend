@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="footer-content">
             <div className="footer-content-left">
                 <img src={assets.logo} alt="" />
-                <p>JDH dsjfh skjs dfih ifd uh iers rishh rkj herh gie </p>
+                <p>Here at Icy Foodies , we give you the best experience to take home.</p>
                 <div className="footer-social-icons">
                     <img src={assets.facebook_icon} alt="" />
                     <img src={assets.twitter_icon} alt="" />
